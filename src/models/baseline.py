@@ -22,14 +22,22 @@ class BaselineValidator(nn.Module):
             for param in self.clip.parameters():
                 param.requires_grad = False
 
-        # Classification head
+        # Get CLIP dimensions
         clip_dim = self.clip.config.projection_dim
+
+        # New classifier that uses both similarity and raw features
         self.classifier = nn.Sequential(
-            nn.Linear(1, 32),  # Adjust dimensions to fit similarity input
+            # Concatenated: similarity (1) + image features (clip_dim) + text features (clip_dim)
+            nn.Linear(2 * clip_dim + 1, 512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(128, 32),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(32, 1),
-            nn.Sigmoid()
+            nn.Linear(32, 1)
         )
 
     def forward(self, images, texts):
@@ -50,17 +58,23 @@ class BaselineValidator(nn.Module):
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=77,  # CLIP's max length
+            max_length=77,
             do_rescale=False
         ).to(images.device)
 
         clip_outputs = self.clip(**inputs)
 
-        # Extract diagonal elements (similarities between corresponding pairs)
-        similarity = torch.diag(clip_outputs.logits_per_image)  # (batch_size,)
+        # Get image and text features
+        image_features = clip_outputs.image_embeds
+        text_features = clip_outputs.text_embeds
 
-        # Reshape to (batch_size, 1)
-        similarity = similarity.unsqueeze(1)  # Ensure correct shape (batch_size, 1)
+        # Get similarity score
+        similarity = torch.diag(clip_outputs.logits_per_image).unsqueeze(1)
+
+        # print(f"Similarity range: {similarity.min().item():.3f} to {similarity.max().item():.3f}")
+
+        # Concatenate all features
+        combined_features = torch.cat([similarity, image_features, text_features], dim=1)
 
         # Classification
-        return self.classifier(similarity)
+        return self.classifier(combined_features)
