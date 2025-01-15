@@ -7,6 +7,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import precision_recall_fscore_support
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 class Trainer:
@@ -30,7 +32,7 @@ class Trainer:
         n_samples = len(train_loader.dataset)
         n_positives = sum(train_loader.dataset.df["label"])
         pos_weight = (n_samples - n_positives) / n_positives
-        self.criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]))
+        self.criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight], device=device))
 
         # Optimizer
         self.optimizer = torch.optim.AdamW(
@@ -114,19 +116,26 @@ class Trainer:
             patience: int = 3
     ):
         """Full training loop with early stopping."""
+        import time
+        start_time = time.time()
         best_f1 = 0
         patience_counter = 0
 
         for epoch in range(num_epochs):
+            epoch_start = time.time()
             print(f"\nEpoch {epoch + 1}/{num_epochs}")
 
             # Train and validate
             train_metrics = self.train_epoch()
             val_metrics = self.validate()
 
+            # Calculate epoch time
+            epoch_time = time.time() - epoch_start
+
             # Print metrics
             metrics = {**train_metrics, **val_metrics}
             print("\n".join(f"{k}: {v:.4f}" for k, v in metrics.items()))
+            print(f"Epoch time: {epoch_time:.2f} seconds")
 
             # Early stopping
             if val_metrics["val_f1"] > best_f1:
@@ -136,11 +145,16 @@ class Trainer:
                 # Save best model
                 if checkpoint_dir:
                     self.save_checkpoint(checkpoint_dir / "best_model.pt")
+                    print(f"Saved best model with validation F1: {best_f1:.4f}")
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
                     print(f"\nEarly stopping after {epoch + 1} epochs")
                     break
+
+        total_time = time.time() - start_time
+        print(f"\nTotal training time: {total_time:.2f} seconds ({total_time / 60:.2f} minutes)")
+        print(f"Best validation F1: {best_f1:.4f}")
 
     def save_checkpoint(self, path: Path):
         """Save model checkpoint."""
