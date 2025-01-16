@@ -6,6 +6,8 @@ from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
 
+from src.utils.preprocessing import get_default_transform
+
 
 class ValidationDataset(Dataset):
     """Dataset for image-text validation pairs."""
@@ -48,10 +50,7 @@ class ValidationDataset(Dataset):
             self.df = test_df
 
         # Default transformations if none are provided
-        self.transform = transform or transforms.Compose([
-            transforms.Resize((256, 256)),  # Ensure standardized size
-            transforms.ToTensor(),          # Convert to PyTorch tensor
-        ])
+        self.transform = transform or get_default_transform()
 
         print(f"Loaded {len(self.df)} samples for {split} split")
 

@@ -8,6 +8,7 @@ from PIL import Image
 import numpy as np
 
 from ..models.baseline import BaselineValidator
+from ..utils.preprocessing import get_default_transform
 
 
 class ImageTextValidator:
@@ -27,6 +28,10 @@ class ImageTextValidator:
         checkpoint = torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.eval()
+
+        # Default transformations
+        # todo: take from config
+        self.transform = get_default_transform()
 
     def validate(
             self,
@@ -72,11 +77,21 @@ class ImageTextValidator:
         image = image.convert('RGB')
 
         # Get model prediction
+        # Get model prediction
         with torch.no_grad():
-            outputs = self.model(
-                images=torch.stack([self.model.processor(image)]),
-                texts=[text]
-            )
+            # Process inputs
+            processed = self.model.processor(
+                images=image,
+                text=[text],
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=77,
+                do_rescale=False
+            ).to(self.device)
+
+            # Pass to model with expected arguments
+            outputs = self.model(processed['pixel_values'], [text])
             probability = torch.sigmoid(outputs)[0].item()
 
         # Format results
