@@ -25,7 +25,7 @@ class BaselineValidator(nn.Module):
         # Get CLIP dimensions
         clip_dim = self.clip.config.projection_dim
 
-        # New classifier that uses both similarity and raw features
+        # Classifier that uses both similarity and raw features
         self.classifier = nn.Sequential(
             # Concatenated: similarity (1) + image features (clip_dim) + text features (clip_dim)
             nn.Linear(2 * clip_dim + 1, 512),
