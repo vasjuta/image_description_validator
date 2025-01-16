@@ -1,4 +1,11 @@
-# Image-Text Validation: Baseline Approach
+# Image-Text Validation
+This project implements a machine learning pipeline for validating whether text descriptions accurately match their corresponding images. Given an image-text pair, the system predicts whether the description is accurate (1) or mismatched (0). The solution combines modern vision-language models with a custom classification approach to achieve robust validation performance.
+
+Key features:
+- High-accuracy image-text validation (>93% F1 score on unseen data)
+- CLIP-based architecture for robust semantic understanding
+- Production-ready inference pipeline
+- Comprehensive evaluation suite
 
 ## System Design
 The project follows a modular design with clear separation of concerns:
@@ -9,7 +16,7 @@ The project follows a modular design with clear separation of concerns:
 - ```training/```: Training pipeline with early stopping and metrics tracking
 - ```evaluation/```: Comprehensive evaluation suite
 - ```inference/```: User-friendly API for model usage
-- ```utils/```: EDA and logging utilities
+- ```utils/```: EDA, logging utilities, shared preprocessing
 
 ```scripts/```: Entry points for training, evaluation, and inference
 
@@ -35,7 +42,7 @@ Our exploratory data analysis revealed several key characteristics:
 - Organized in 60 folders (00000-00059)
 
 ### Baseline Approach & Design Choices
-## Model Architecture:
+### Model Architecture:
 - CLIP-based backbone with classification head
 - Features:
   * Image and text embeddings from CLIP
@@ -45,14 +52,28 @@ Our exploratory data analysis revealed several key characteristics:
   * CLIP provides strong pretrained image-text understanding
   * Architecture handles both exact matches and semantic similarity
   * Efficient for both training and inference
+- Model Profile:
+  * Total parameters: 88M
+  * Trainable parameters: 66 (classification head only)
+  * Model size: 584MB
+  
+### Preprocessing Pipeline:
+- Images:
+  * Standardized resizing to 256x256
+  * Tensor conversion via torchvision transforms
+  * Modular design in preprocessing.py for reusability
+- Text:
+  * Leverages CLIP's built-in processor for tokenization
+  * Ensures alignment with CLIP's pretraining expectations
+  * Handles padding, truncation, and special tokens automatically
 
-## Training Strategy:
+### Training Strategy:
 - Weighted BCE loss to handle 84.5/15.5 class imbalance
 - Learning rate: 1e-4 with AdamW optimizer
 - Early stopping on validation F1-score
 - Frozen CLIP weights to prevent catastrophic forgetting
 
-## Model Performance
+## Baseline Model Performance
 
 ### Data Split
 - Training set: 40,600 samples (70%)
@@ -82,6 +103,9 @@ Performance on unseen data:
 - F1 Score: 0.9318
 - Specificity: 0.9805
 - ROC AUC: 0.9961
+
+### Model Considerations
+The baseline model showed very good results, thus, given the scope of this task, we didn't proceed to explore alternatives.
 
 ## External Dependencies
 - ```transformers```: CLIP model and tokenizer (Hugging Face)
@@ -145,12 +169,22 @@ validator = ImageTextValidator("path/to/model.pt")
 result = validator.validate("path/to/image.jpg", "image description")
 ```
 
-### Potential Improvements
+### Potential Improvements And Enhancements
 ## Model
 1. Error Analysis
 2. Data augmentation for better generalization
 3. Experiment with unfreezing CLIP layers
 4. Ensemble approaches combining different CLIP variants
+5. Alternative Approaches:
+   - Two-tower architecture with separate encoders:
+     * Use BERT for text and ResNet/ViT for images instead of CLIP
+     * Pros: More control over feature extraction and model behavior
+     * Cons: Would require more training data and compute; might not match CLIP's robust pretraining
+   - Generation-validation hybrid:
+     * Use image captioning model (e.g., BLIP) to generate descriptions
+     * Compare semantic similarity between generated and provided captions
+     * Pros: Could catch subtle mismatches CLIP might miss
+     * Cons: Significantly higher latency (two model passes); larger compute requirements
 
 ## System
 1. Inference optimization for production deployment
@@ -159,4 +193,13 @@ result = validator.validate("path/to/image.jpg", "image description")
    - Store and version preprocessing configurations with model artifacts
    - Add validation to ensure inference-time transforms match training
 3. More thorough error handling and logging throughout the codebase
-4. Containerization 
+4. Model versioning and registry
+5. Containerization 
+6. Cache layer
+
+## User Experience
+1. Web client
+2. Enable texts (captions) in non-English languages
+3. Batch image-text validation
+4. Suggest correct text in case of validation miss
+5. Censorship for both images and texts
