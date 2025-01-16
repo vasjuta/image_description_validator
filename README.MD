@@ -13,6 +13,8 @@ The project follows a modular design with clear separation of concerns:
 
 ```scripts/```: Entry points for training, evaluation, and inference
 
+```tests/```: Basic unit tests
+
 ## Dataset Analysis and Model Choice
 
 ### EDA Findings
@@ -33,7 +35,7 @@ Our exploratory data analysis revealed several key characteristics:
 - Organized in 60 folders (00000-00059)
 
 ### Baseline Approach & Design Choices
-1.Model Architecture:
+## Model Architecture:
 - CLIP-based backbone with classification head
 - Features:
   * Image and text embeddings from CLIP
@@ -44,7 +46,7 @@ Our exploratory data analysis revealed several key characteristics:
   * Architecture handles both exact matches and semantic similarity
   * Efficient for both training and inference
 
-2.Training Strategy:
+## Training Strategy:
 - Weighted BCE loss to handle 84.5/15.5 class imbalance
 - Learning rate: 1e-4 with AdamW optimizer
 - Early stopping on validation F1-score
@@ -58,6 +60,8 @@ Our exploratory data analysis revealed several key characteristics:
 - Test set: 8,700 samples (15%)
 
 ### Training Performance
+Training time (6 epochs, batch size 64) on Tesla T4 in Google Colab: ~60 mins
+
 Best model achieved (after 3 epochs):
 - Training Loss: 0.1184
 - Training F1: 0.9184
@@ -79,8 +83,6 @@ Performance on unseen data:
 - Specificity: 0.9805
 - ROC AUC: 0.9961
 
-Error analysis revealed that most misclassifications occur in cases .
-
 ## External Dependencies
 - ```transformers```: CLIP model and tokenizer (Hugging Face)
   * Chosen for robust pretrained models and active maintenance
@@ -92,22 +94,13 @@ Error analysis revealed that most misclassifications occur in cases .
   * Provides comprehensive evaluation metrics
 - ```pandas```: Data handling and analysis
   * Efficient for large dataset management
-
-## Performance Metrics
-The model is evaluated on:
-- Accuracy
-- Precision
-- Recall
-- F1 Score
-- ROC AUC
-- Error analysis on misclassified examples
  
 ## Usage
 
 ### Data Analysis
 ```bash
 # Run exploratory data analysis
-python -m src.utils.eda /path/to/dataset
+python scripts/run_eda.py /path/to/dataset
 ```
 
 ### Training
@@ -152,9 +145,18 @@ validator = ImageTextValidator("path/to/model.pt")
 result = validator.validate("path/to/image.jpg", "image description")
 ```
 
-## Future Improvements
-Potential areas for enhancement:
-1. Data augmentation for better generalization
-2. Experiment with unfreezing CLIP layers
-3. Ensemble approaches combining different CLIP variants
-4. Additional inference optimization for production deployment
+### Potential Improvements
+## Model
+1. Error Analysis
+2. Data augmentation for better generalization
+3. Experiment with unfreezing CLIP layers
+4. Ensemble approaches combining different CLIP variants
+
+## System
+1. Inference optimization for production deployment
+2. Preprocessing pipeline improvements:
+   - Extract transform logic to a configurable component
+   - Store and version preprocessing configurations with model artifacts
+   - Add validation to ensure inference-time transforms match training
+3. More thorough error handling and logging throughout the codebase
+4. Containerization 
