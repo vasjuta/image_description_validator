@@ -123,7 +123,7 @@ class Evaluator:
                 for text, label, pred, prob in zip(
                         texts, labels, predictions, probs
                 ):
-                    if label != pred:
+                    if int(label.item()) != pred:
                         error_cases.append({
                             "text": text,
                             "true_label": label.item(),
