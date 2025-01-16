@@ -105,7 +105,13 @@ Performance on unseen data:
 - ROC AUC: 0.9961
 
 ### Model Considerations
-The baseline model showed very good results, thus, given the scope of this task, we didn't proceed to explore alternatives.
+Error analysis on the test set revealed that the model is:
+- Most confident on straightforward object/action descriptions
+- Reliable at catching completely mismatched content
+- More uncertain on abstract or metaphorical descriptions
+- Shows appropriate uncertainty (confidence ~0.5) in ambiguous cases
+
+However, the model's performance (93% F1-score on unseen data) already meets high accuracy requirements for this project. Given the robust error analysis and appropriate uncertainty handling, we chose not to explore alternatives at this stage. See [Potential Improvements](#potential-improvements) section for future enhancement ideas.
 
 ## External Dependencies
 - ```transformers```: CLIP model and tokenizer (Hugging Face)
@@ -196,10 +202,12 @@ result = validator.validate("path/to/image.jpg", "image description")
 4. Model versioning and registry
 5. Containerization 
 6. Cache layer
+7. Deal with all training/evaluation/inference warnings
 
 ## User Experience
 1. Web client
-2. Enable texts (captions) in non-English languages
-3. Batch image-text validation
-4. Suggest correct text in case of validation miss
-5. Censorship for both images and texts
+2. Validation progress bar
+3. Enable texts (captions) in non-English languages
+4. Batch image-text validation
+5. Suggest correct text in case of validation miss
+6. Censorship for both images and texts
