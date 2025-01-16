@@ -1,42 +1,107 @@
 # Image-Text Validation: Baseline Approach
 
-## Dataset Analysis and Baseline Decision
+## System Design
+The project follows a modular design with clear separation of concerns:
+
+```/src```
+- ```data/```: Dataset handling and preprocessing
+- ```models/```: CLIP-based baseline model implementation
+- ```training/```: Training pipeline with early stopping and metrics tracking
+- ```evaluation/```: Comprehensive evaluation suite
+- ```inference/```: User-friendly API for model usage
+- ```utils/```: EDA and logging utilities
+
+```scripts/```: Entry points for training, evaluation, and inference
+
+## Dataset Analysis and Model Choice
 
 ### EDA Findings
 Our exploratory data analysis revealed several key characteristics:
 
-1. Dataset Structure:
+1.Dataset Structure:
 - 58,000 image-text pairs total
 - Significant class imbalance: 84.5% non-matching vs 15.5% matching pairs
 - All images standardized to 256x256
 
-2. Text Properties:
+2.Text Properties:
 - Highly structured descriptions (67.5% start with "a")
 - Average length: 10.4 words, 52.5 characters
 - Common starting words suggest focus on object quantities ("two", "three", "several")
 
-3. Image Properties:
+3.Image Properties:
 - Consistent 256x256 dimensions
 - Organized in 60 folders (00000-00059)
 
-### Baseline Approach
-Based on these findings, we chose the following baseline approach:
-
-1. Model: CLIP-based architecture
-- Pretrained CLIP model for joint image-text embedding
-- Simple classification head on top
+### Baseline Approach & Design Choices
+1.Model Architecture:
+- CLIP-based backbone with classification head
+- Features:
+  * Image and text embeddings from CLIP
+  * Concatenated feature vector (CLIP embeddings + similarity score)
+  * Multi-layer classification head with dropout
 - Reasoning:
-  * CLIP is already trained for image-text alignment
-  * Handles both modalities efficiently
-  * Good at object recognition and counting
-  * Minimal preprocessing needed due to standardized data
+  * CLIP provides strong pretrained image-text understanding
+  * Architecture handles both exact matches and semantic similarity
+  * Efficient for both training and inference
 
-2. Training Strategy:
-- Weighted loss to handle class imbalance (84.5/15.5 ratio)
-- Basic train/validation split
+2.Training Strategy:
+- Weighted BCE loss to handle 84.5/15.5 class imbalance
+- Learning rate: 1e-4 with AdamW optimizer
 - Early stopping on validation F1-score
-- No data augmentation in baseline
+- Frozen CLIP weights to prevent catastrophic forgetting
 
+## Model Performance
+
+### Data Split
+- Training set: 40,600 samples (70%)
+- Validation set: 8,700 samples (15%)
+- Test set: 8,700 samples (15%)
+
+### Training Performance
+Best model achieved (after 3 epochs):
+- Training Loss: 0.1184
+- Training F1: 0.9184
+- Validation Loss: 0.1098
+- Validation F1: 0.9408
+
+Other metrics:
+- Training Precision: 0.8606
+- Training Recall: 0.9846
+- Validation Precision: 0.9114
+- Validation Recall: 0.9722 
+
+### Test Set Performance
+Performance on unseen data:
+- Accuracy: 0.9786
+- Precision: 0.8982
+- Recall: 0.9680
+- F1 Score: 0.9318
+- Specificity: 0.9805
+- ROC AUC: 0.9961
+
+Error analysis revealed that most misclassifications occur in cases .
+
+## External Dependencies
+- ```transformers```: CLIP model and tokenizer (Hugging Face)
+  * Chosen for robust pretrained models and active maintenance
+- ```torch```: Deep learning framework
+  * Industry standard with good GPU support
+- ```Pillow```: Image processing
+  * Required for image loading and preprocessing
+- ```scikit-learn```: Metrics calculation
+  * Provides comprehensive evaluation metrics
+- ```pandas```: Data handling and analysis
+  * Efficient for large dataset management
+
+## Performance Metrics
+The model is evaluated on:
+- Accuracy
+- Precision
+- Recall
+- F1 Score
+- ROC AUC
+- Error analysis on misclassified examples
+ 
 ## Usage
 
 ### Data Analysis
@@ -71,3 +136,25 @@ python scripts/evaluate.py /path/to/dataset \
 # - error_analysis.csv: Analysis of misclassified examples
 # - evaluation.log: Detailed evaluation log
 ```
+
+### Inference
+```bash
+# Command-line inference
+python scripts/inference_client.py \
+    path/to/model.pt \
+    path/to/image.jpg \
+    "image description"
+
+# API Usage
+from src.inference.api import ImageTextValidator
+
+validator = ImageTextValidator("path/to/model.pt")
+result = validator.validate("path/to/image.jpg", "image description")
+```
+
+## Future Improvements
+Potential areas for enhancement:
+1. Data augmentation for better generalization
+2. Experiment with unfreezing CLIP layers
+3. Ensemble approaches combining different CLIP variants
+4. Additional inference optimization for production deployment
