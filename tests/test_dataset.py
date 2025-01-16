@@ -36,6 +36,7 @@ def setup_data(tmp_path):
 
     return data_dir
 
+
 def test_dataset_initialization(setup_data):
     """
     Test the initialization of ValidationDataset and split sizes.
