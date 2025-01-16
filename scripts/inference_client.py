@@ -38,6 +38,12 @@ def main():
         args = parse_args()
         logger = setup_logger("inference")
 
+        # Debug print
+        # print("Received arguments:")
+        # print(f"Model path: {args.model_path}")
+        # print(f"Image path: {args.image_path}")
+        # print(f"Text: {args.text!r}")
+
         # Validate inputs
         validate_inputs(args.model_path, args.image_path, args.text)
 
