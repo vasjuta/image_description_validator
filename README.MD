@@ -111,7 +111,8 @@ Error analysis on the test set revealed that the model is:
 - More uncertain on abstract or metaphorical descriptions
 - Shows appropriate uncertainty (confidence ~0.5) in ambiguous cases
 
-However, the model's performance (93% F1-score on unseen data) already meets high accuracy requirements for this project. Given the robust error analysis and appropriate uncertainty handling, we chose not to explore alternatives at this stage. See [Potential Improvements](#potential-improvements) section for future enhancement ideas.
+However, the model's performance (93% F1-score on unseen data) already meets accuracy requirements for the scope of this project. 
+We chose not to explore alternatives at this stage. See [Potential Improvements](#potential-improvements) section for future enhancement ideas.
 
 ## External Dependencies
 - ```transformers```: CLIP model and tokenizer (Hugging Face)
