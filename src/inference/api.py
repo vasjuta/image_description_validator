@@ -76,22 +76,12 @@ class ImageTextValidator:
         # Ensure image is RGB
         image = image.convert('RGB')
 
-        # Get model prediction
+        # Apply the same transforms as dataset
+        image_tensor = self.transform(image).unsqueeze(0).to(self.device)  # Add batch dimension
+
         # Get model prediction
         with torch.no_grad():
-            # Process inputs
-            processed = self.model.processor(
-                images=image,
-                text=[text],
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=77,
-                do_rescale=False
-            ).to(self.device)
-
-            # Pass to model with expected arguments
-            outputs = self.model(processed['pixel_values'], [text])
+            outputs = self.model(image_tensor, [text])
             probability = torch.sigmoid(outputs)[0].item()
 
         # Format results
